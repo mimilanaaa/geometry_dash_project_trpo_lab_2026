@@ -1,0 +1,2 @@
+# geometry_dash_project_trpo_lab_2026
+technologiya razrabotki programmnogo obespecheniya
