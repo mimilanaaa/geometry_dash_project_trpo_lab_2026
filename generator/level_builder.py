@@ -98,3 +98,26 @@ def generate_level(audio_path: str, seed: int = 42, difficulty: str = "normal") 
     
     return level
 
+def save_level_to_file(level: Level, output_dir: str = "levels"):
+    out_path = Path(output_dir)
+    out_path.mkdir(parents=True, exist_ok=True)
+    
+    safe_name = "".join([c for c in level.name if c.isalpha() or c.isdigit() or c==' ']).rstrip()
+    filename = out_path / f"{safe_name}.json"
+    
+    level.to_json(str(filename))
+    print(f"\n[+] Уровень успешно сохранен: {filename}")
+    print(f"    Всего препятствий: {len(level.obstacles)}")
+    print(f"    Всего порталов: {len(level.portals)}")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Ошибка: Не указан путь к аудиофайлу.")
+        print("Использование: python -m generator.level_builder <путь_к_музыке.mp3> [сложность]")
+        sys.exit(1)
+        
+    audio_path = sys.argv[1]
+    diff = sys.argv[2] if len(sys.argv) > 2 else "normal"
+    
+    generated_level = generate_level(audio_path, seed=42, difficulty=diff)
+    save_level_to_file(generated_level)
