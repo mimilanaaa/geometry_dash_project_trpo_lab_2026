@@ -1,6 +1,7 @@
 import arcade
 from ui import theme
 from ui import form_view
+from ui import shadow
 
 
 def draw_title(view, title, subtitle):
@@ -8,6 +9,7 @@ def draw_title(view, title, subtitle):
     w = view.window.width
     h = view.window.height
     arcade.draw_polygon_filled([(0, h), (220, h), (120, h - 90), (0, h - 90)], t["accent"])
+    shadow.text(title, 40, h - 150, 40, 4)
     arcade.draw_text(title, 40, h - 150, t["text"], 40, font_name=theme.FONT, bold=True)
     arcade.draw_text(subtitle, 42, h - 185, t["text_soft"], 14, font_name=theme.FONT, bold=True)
     arcade.draw_text("T — тема", w - 24, h - 40, t["text_soft"], 12,
@@ -47,6 +49,8 @@ class FormSelectView(arcade.View):
         for i, form in enumerate(self.forms):
             left, right, bottom, top = self.card_rect(i)
             opened = self.is_open(form)
+            lift = 12 if i == self.index else 6
+            shadow.box(left, right, bottom, top, lift)
             arcade.draw_lrbt_rectangle_filled(left, right, bottom, top, t["panel"])
             if i == self.index:
                 arcade.draw_lrbt_rectangle_outline(left, right, bottom, top, t["accent"], 5)
@@ -55,6 +59,7 @@ class FormSelectView(arcade.View):
 
             cx = (left + right) / 2
             angle = self.angle if i == self.index and opened else 0
+            shadow.ground(cx, bottom + 72, 60)
             if opened:
                 form_view.draw_form(form, cx, bottom + 120, 70, angle)
                 name_color = t["text"]
