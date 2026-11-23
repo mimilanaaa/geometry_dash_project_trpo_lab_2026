@@ -3,6 +3,7 @@ from ui import theme
 from ui import settings
 from ui import form_view
 from ui import object_view
+from ui import shadow
 from ui.hud import Hud
 from ui.menu import FormSelectView
 from ui.track_screen import TrackLoadView
@@ -42,6 +43,7 @@ class PreviewView(arcade.View):
             x = 700 + i * 400 - shift
             object_view.draw_object("spike" if i % 2 == 0 else "block", x, ground, 50)
         angle = self.angle if self.form == "cube" else 0
+        shadow.ground(300, ground + 2, 60)
         form_view.draw_form(self.form, 300, ground + 30, 60, angle)
         self.hud.draw(self.percent(), self.demo.attempt, self.form)
         arcade.draw_text("Esc — пауза, D — смерть, T — тема", 24, 24, t["text_soft"], 12,

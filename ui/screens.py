@@ -2,6 +2,7 @@ import arcade
 from ui import theme
 from ui import settings
 from ui import form_view
+from ui import shadow
 from ui.menu import draw_title
 from ui.track_screen import Button
 
@@ -76,6 +77,8 @@ class MainMenuView(arcade.View):
         w = self.window.width
         h = self.window.height
         arcade.draw_polygon_filled([(w * 0.55, 0), (w, 0), (w, h), (w * 0.75, h)], t["accent"])
+        shadow.text("MUSICALLY", 40, h - 110, 54, 5)
+        shadow.text("GEOMETRY", 40, h - 175, 54, 5)
         arcade.draw_text("MUSICALLY", 40, h - 110, t["text"], 54, font_name=theme.FONT, bold=True)
         arcade.draw_text("GEOMETRY", 40, h - 175, t["accent"], 54, font_name=theme.FONT, bold=True)
         arcade.draw_text("Уровни из твоей музыки", 44, h - 210, t["text_soft"], 16,
@@ -83,6 +86,10 @@ class MainMenuView(arcade.View):
         self.menu.draw()
         cx = w * 0.8
         cy = h / 2
+        cube = [(cx - 145, cy + 35), (cx - 35, cy + 35), (cx - 35, cy + 145), (cx - 145, cy + 145)]
+        shadow.polygon(form_view.rotate_points(cube, cx - 90, cy + 90, self.angle), 14)
+        shadow.polygon([(cx + 25, cy - 53), (cx + 135, cy - 20), (cx + 25, cy + 13)], 14)
+        shadow.circle(cx - 60, cy - 150, 45, 14)
         form_view.draw_form("cube", cx - 90, cy + 90, 110, self.angle)
         form_view.draw_form("ship", cx + 80, cy - 20, 110)
         form_view.draw_form("ball", cx - 60, cy - 150, 90, -self.angle)
@@ -163,6 +170,7 @@ class DeathView(arcade.View):
         t = theme.get_theme()
         cx = self.window.width / 2
         cy = self.window.height / 2
+        shadow.text(str(self.percent) + "%", cx, cy + 110, 72, 5, anchor_x="center")
         arcade.draw_text(str(self.percent) + "%", cx, cy + 110, t["accent"], 72,
                          font_name=theme.FONT, bold=True, anchor_x="center")
         arcade.draw_text("ПОПЫТКА " + str(self.attempt), cx, cy + 60, t["text"], 20,
@@ -207,7 +215,9 @@ class CompleteView(arcade.View):
         cy = h / 2
         arcade.draw_polygon_filled([(0, 0), (w * 0.25, 0), (0, h * 0.45)], t["accent"])
         arcade.draw_polygon_filled([(w, h), (w * 0.75, h), (w, h * 0.55)], t["accent"])
+        shadow.ground(cx, cy + 122, 70)
         form_view.draw_form("cube", cx, cy + 170, 70, self.angle)
+        shadow.text("УРОВЕНЬ ПРОЙДЕН", cx, cy + 70, 44, 4, anchor_x="center")
         arcade.draw_text("УРОВЕНЬ ПРОЙДЕН", cx, cy + 70, t["text"], 44,
                          font_name=theme.FONT, bold=True, anchor_x="center")
         arcade.draw_text(self.level_name, cx, cy + 30, t["text_soft"], 18,
@@ -239,6 +249,7 @@ class SettingsView(arcade.View):
 
     def draw_volume(self, value, x, y):
         t = theme.get_theme()
+        shadow.box(x, x + 300, y - 6, y + 6, 3)
         arcade.draw_lrbt_rectangle_filled(x, x + 300, y - 6, y + 6, t["bar_back"])
         arcade.draw_lrbt_rectangle_filled(x, x + 3 * value, y - 6, y + 6, t["accent"])
         arcade.draw_text(str(value) + "%", x + 320, y - 9, t["text"], 16,

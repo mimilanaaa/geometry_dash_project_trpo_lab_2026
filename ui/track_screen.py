@@ -4,6 +4,7 @@ import subprocess
 import threading
 import arcade
 from ui import theme
+from ui import shadow
 from ui.menu import draw_title
 
 FORMATS = [".mp3", ".wav", ".ogg", ".flac", ".m4a"]
@@ -62,10 +63,12 @@ class Button:
         right = self.x + self.width / 2
         bottom = self.y - self.height / 2
         top = self.y + self.height / 2
+        shadow.box(left, right, bottom, top, 5)
         if filled:
             arcade.draw_lrbt_rectangle_filled(left, right, bottom, top, t["accent"])
             text_color = t["background"]
         else:
+            arcade.draw_lrbt_rectangle_filled(left, right, bottom, top, t["panel"])
             arcade.draw_lrbt_rectangle_outline(left, right, bottom, top, t["line"], 3)
             text_color = t["text"]
         arcade.draw_text(self.text, self.x, self.y, text_color, 16, font_name=theme.FONT,
@@ -182,6 +185,7 @@ class TrackLoadView(arcade.View):
         right = w / 2 + 300
         bottom = 200
         top = h - 230
+        shadow.box(left, right, bottom, top, 10)
         arcade.draw_lrbt_rectangle_filled(left, right, bottom, top, t["panel"])
         arcade.draw_lrbt_rectangle_outline(left, right, bottom, top, t["line"], 2)
 

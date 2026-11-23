@@ -1,6 +1,7 @@
 import arcade
 from ui import theme
 from ui import form_view
+from ui import shadow
 
 ORB_COLOR = (255, 210, 0)
 PAD_COLOR = (255, 90, 200)
@@ -10,6 +11,7 @@ def draw_spike(x, y, size):
     t = theme.get_theme()
     h = size / 2
     points = [(x - h, y), (x + h, y), (x, y + size)]
+    arcade.draw_polygon_filled([(x - h, y), (x + h, y), (x + h + size * 0.5, y + size * 0.35)], shadow.color())
     arcade.draw_polygon_filled(points, t["text"])
     arcade.draw_polygon_outline(points, t["accent"], 2)
 
@@ -17,6 +19,8 @@ def draw_spike(x, y, size):
 def draw_block(x, y, size):
     t = theme.get_theme()
     h = size / 2
+    arcade.draw_polygon_filled([(x + h, y), (x + h + size * 0.4, y + size * 0.3),
+                                (x + h + size * 0.4, y + size * 1.1), (x + h, y + size)], shadow.color())
     arcade.draw_lrbt_rectangle_filled(x - h, x + h, y, y + size, t["panel"])
     arcade.draw_lrbt_rectangle_outline(x - h, x + h, y, y + size, t["line"], 3)
     q = size / 4
@@ -26,6 +30,7 @@ def draw_block(x, y, size):
 def draw_orb(x, y, size):
     r = size / 2.5
     cy = y + size / 2
+    shadow.ground(x, y + 2, size * 0.6)
     arcade.draw_circle_outline(x, cy, r, ORB_COLOR, 5)
     arcade.draw_circle_filled(x, cy, r / 2.5, ORB_COLOR)
 
@@ -42,6 +47,7 @@ def draw_portal(x, y, size, target_form="cube", speed=1.0):
     w = size * 0.8
     h = size * 2.4
     cy = y + h / 2
+    shadow.ground(x, y + 2, size)
     arcade.draw_ellipse_filled(x, cy, w, h, color + (60,))
     arcade.draw_ellipse_outline(x, cy, w, h, color, 6)
     arcade.draw_ellipse_outline(x, cy, w * 0.6, h * 0.8, theme.darker(color), 2)
