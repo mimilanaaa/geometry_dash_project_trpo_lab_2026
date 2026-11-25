@@ -1,5 +1,6 @@
 import random
 import sys
+import hashlib
 from pathlib import Path
 
 from generator.level_format import Level, Obstacle, Portal, ObjectType, FormType
@@ -10,6 +11,13 @@ FLOOR_Y = 100.0
 MIN_SAFE_GAP = 0.45
 PORTAL_HEIGHT = 300.0
 
+def get_file_hash(filepath: str) -> str:
+    sha256_hash = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for byte_block in iter(lambda: f.read(65536), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
 def generate_level(audio_path: str, seed: int = 42, difficulty: str = "normal") -> Level:
     random.seed(seed)
     
@@ -17,8 +25,7 @@ def generate_level(audio_path: str, seed: int = 42, difficulty: str = "normal") 
     try:
         audio_data = analyze_track(audio_path)
     except Exception as e:
-        print(f"[!] Ошибка при чтении файла: {e}")
-        sys.exit(1)
+        raise RuntimeError(f"Не удалось обработать аудиофайл {audio_path}: {e}") from e
 
     beats = audio_data["beat_times"]
     bpm = audio_data["bpm"]
@@ -84,6 +91,8 @@ def generate_level(audio_path: str, seed: int = 42, difficulty: str = "normal") 
                 portal_cooldown = portal_time + 10.0 
                 print(f"  [+] Добавлен портал в {new_form.value} на {portal_time:.2f} сек.")
 
+    track_hash = get_file_hash(audio_path)
+
     level_name = f"Auto_{Path(audio_path).stem}_{difficulty}"
     level = Level(
         name=level_name,
@@ -91,7 +100,7 @@ def generate_level(audio_path: str, seed: int = 42, difficulty: str = "normal") 
         duration=duration,
         author="Automatic Generator",
         track_name=audio_data["file_name"],
-        track_hash="hash_" + str(abs(hash(audio_data["file_name"]))),
+        track_hash=track_hash,
         obstacles=obstacles,
         portals=portals
     )
@@ -119,5 +128,9 @@ if __name__ == "__main__":
     audio_path = sys.argv[1]
     diff = sys.argv[2] if len(sys.argv) > 2 else "normal"
     
-    generated_level = generate_level(audio_path, seed=42, difficulty=diff)
-    save_level_to_file(generated_level)
+    try:
+        generated_level = generate_level(audio_path, seed=42, difficulty=diff)
+        save_level_to_file(generated_level)
+    except RuntimeError as e:
+        print(f"[!] Ошибка: {e}")
+        sys.exit(1)
