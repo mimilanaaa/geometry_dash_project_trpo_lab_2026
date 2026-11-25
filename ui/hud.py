@@ -1,6 +1,7 @@
 import arcade
 from ui import theme
 from ui import form_view
+from ui import shadow
 
 
 class Hud:
@@ -27,6 +28,7 @@ class Hud:
         top = self.height - 24
         bottom = top - self.bar_height
 
+        shadow.box(left, right, bottom, top, 4)
         arcade.draw_lrbt_rectangle_filled(left, right, bottom, top, t["bar_back"])
         fill_right = left + self.bar_width * percent / 100
         if fill_right > left:
@@ -35,6 +37,7 @@ class Hud:
         arcade.draw_line(best_x, bottom - 4, best_x, top + 4, t["text"], 2)
         arcade.draw_lrbt_rectangle_outline(left, right, bottom, top, t["line"], 2)
 
+        shadow.text(str(int(percent)) + "%", right + 16, bottom - 4, 22, 2)
         arcade.draw_text(str(int(percent)) + "%", right + 16, bottom - 4, t["text"],
                          22, font_name=theme.FONT, bold=True)
 
