@@ -40,9 +40,30 @@ class LevelViewerView(arcade.View):
         self.level = level
         self.on_back = on_back
         self.scroll = 0
-        self.zoom = 1.0
+        self.floor = self.find_floor()
+        self.zoom = self.find_zoom()
         self.speed = self.find_speed()
         self.length = self.find_length()
+
+    def find_floor(self):
+        if len(self.level.obstacles) == 0:
+            return 0
+        return min(obs.y for obs in self.level.obstacles)
+
+    def find_zoom(self):
+        top = SIZE
+        for obj in self.level.obstacles:
+            top = max(top, obj.y - self.floor + SIZE)
+        for obj in self.level.portals:
+            top = max(top, obj.y - self.floor + SIZE * 2.4)
+        space = HEIGHT - 130 - GROUND - 20
+        zoom = 1.0
+        while top * zoom > space and zoom > 0.25:
+            zoom -= 0.25
+        return zoom
+
+    def to_screen_y(self, y):
+        return GROUND + (y - self.floor) * self.zoom
 
     def find_speed(self):
         for obj in self.level.obstacles + self.level.portals:
@@ -83,12 +104,12 @@ class LevelViewerView(arcade.View):
         for obs in self.level.obstacles:
             sx = self.to_screen(obs.x)
             if -size <= sx <= self.window.width + size:
-                object_view.draw_object(value_of(obs.type), sx, GROUND + obs.y * self.zoom, size,
+                object_view.draw_object(value_of(obs.type), sx, self.to_screen_y(obs.y), size,
                                         obs.properties)
         for portal in self.level.portals:
             sx = self.to_screen(portal.x)
             if -size <= sx <= self.window.width + size:
-                object_view.draw_portal(sx, GROUND + portal.y * self.zoom, size,
+                object_view.draw_portal(sx, self.to_screen_y(portal.y), size,
                                         value_of(portal.target_form), portal.speed_multiplier)
 
     def draw_info(self):

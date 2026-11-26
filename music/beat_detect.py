@@ -16,7 +16,7 @@ def analyze_track(file_path: str) -> dict:
     beat_times = librosa.frames_to_time(beat_frames, sr=sr)
     
     return {
-        "bpm": float(tempo),
+        "bpm": float(np.atleast_1d(tempo)[0]),
         "beat_times": beat_times.tolist() if hasattr(beat_times, 'tolist') else list(beat_times),
         "duration": float(duration),
         "file_name": path.name,
