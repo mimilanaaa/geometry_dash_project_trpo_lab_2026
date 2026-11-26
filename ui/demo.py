@@ -82,7 +82,14 @@ class Demo:
         self.window.show_view(FormSelectView(chosen, self.show_menu, self.form))
 
     def show_track(self):
-        self.window.show_view(TrackLoadView(self.track_ready, self.show_menu))
+        self.track_view = TrackLoadView(self.track_ready, self.show_menu, on_map=self.show_map)
+        self.window.show_view(self.track_view)
+
+    def show_map(self, level):
+        self.window.show_view(LevelViewerView(level, self.back_to_track))
+
+    def back_to_track(self):
+        self.window.show_view(self.track_view)
 
     def track_ready(self, path, result):
         self.track = result
