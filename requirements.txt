@@ -1,3 +1,4 @@
 arcade==3.3.3
 librosa
 numpy
+pytest
