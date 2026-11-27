@@ -5,11 +5,7 @@ from pathlib import Path
 
 from generator.level_format import Level, Obstacle, Portal, ObjectType, FormType
 from music.beat_detect import analyze_track
-
-SCROLL_SPEED = 500.0
-FLOOR_Y = 100.0
-MIN_SAFE_GAP = 0.45
-PORTAL_HEIGHT = 300.0
+from config import SCROLL_SPEED, FLOOR_Y, CEILING_Y, MIN_SAFE_GAP, PORTAL_HEIGHT, START_DELAY, DIFFICULTY_STEPS
 
 def get_file_hash(filepath: str) -> str:
     sha256_hash = hashlib.sha256()
@@ -36,19 +32,14 @@ def generate_level(audio_path: str, seed: int = 42, difficulty: str = "normal") 
     obstacles = []
     portals = []
     
-    if difficulty == "easy":
-        step = 4
-    elif difficulty == "hard":
-        step = 1
-    else:
-        step = 2
+    step = DIFFICULTY_STEPS.get(difficulty, DIFFICULTY_STEPS["normal"])
 
     last_obstacle_time = -10.0
     last_form = FormType.CUBE
     portal_cooldown = 0.0
 
     for i, beat_time in enumerate(beats):
-        if beat_time < 2.0:
+        if beat_time < START_DELAY:
             continue
 
         if i % step != 0:
@@ -69,7 +60,7 @@ def generate_level(audio_path: str, seed: int = 42, difficulty: str = "normal") 
                 Obstacle(x=x_pos, y=FLOOR_Y, time=beat_time, type=ObjectType.SPIKE)
             )
             obstacles.append(
-                Obstacle(x=x_pos, y=600.0, time=beat_time, type=ObjectType.BLOCK)
+                Obstacle(x=x_pos, y=CEILING_Y, time=beat_time, type=ObjectType.BLOCK)
             )
 
         last_obstacle_time = beat_time
