@@ -5,7 +5,10 @@ from core.forms.base import Form
 
 
 class Ship(Form):
-    """Корабль: зажатая кнопка тянет вверх, отпущенная — вниз. Пол и потолок не убивают."""
+    """Корабль: зажатая кнопка тянет вверх, отпущенная — вниз. Пол и потолок не убивают.
+
+    При перевёрнутой гравитации всё наоборот: зажатая кнопка тянет вниз.
+    """
 
     name = "ship"
     height = physics.SHIP_HEIGHT
@@ -17,6 +20,6 @@ class Ship(Form):
 
     def update(self, player, holding, dt):
         accel = physics.SHIP_LIFT if holding else -physics.SHIP_GRAVITY
-        player.vy += accel * dt
+        player.vy += accel * player.gravity * dt
         player.vy = max(-physics.SHIP_MAX_SPEED, min(physics.SHIP_MAX_SPEED, player.vy))
         player.angle = math.degrees(math.atan2(player.vy, player.speed)) * 0.8

@@ -22,6 +22,7 @@ class Player:
         self.angle = 0.0
         self.on_ground = True
         self.alive = True
+        self.gravity = 1        # 1 — обычная, -1 — перевёрнутая
         self.form = make_form(form)
 
     @property
@@ -46,3 +47,11 @@ class Player:
         self.form = make_form(name)
         self.y = old_center - self.height / 2
         self.form.enter(self)
+
+    def change_gravity(self, gravity):
+        """Гравитационный портал: жёлтый даёт -1 (вверх), синий — 1 (обычная)."""
+        if gravity == self.gravity:
+            return
+        self.gravity = gravity
+        self.vy *= physics.GRAVITY_PORTAL_DAMP
+        self.on_ground = False

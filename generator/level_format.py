@@ -12,6 +12,11 @@ class FormType(str, Enum):
     ROBOT = "robot"
     SPIDER = "spider"
 
+class PortalType(str, Enum):
+    FORM = "form"                       # меняет форму на target_form
+    GRAVITY_FLIP = "gravity_flip"       # жёлтый: гравитация вверх, куб бежит по потолку
+    GRAVITY_NORMAL = "gravity_normal"   # синий: обычная гравитация
+
 class ObjectType(str, Enum):
     SPIKE = "spike"
     BLOCK = "block"
@@ -29,12 +34,14 @@ class GameObject:
 @dataclass
 class Obstacle(GameObject):
     type: ObjectType = ObjectType.SPIKE
+    # {"flip": True} — шип висит на потолке остриём вниз (для перевёрнутой гравитации)
     properties: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class Portal(GameObject):
     target_form: FormType = FormType.CUBE
     speed_multiplier: float = 1.0 
+    type: PortalType = PortalType.FORM   # у гравитационных порталов target_form не используется
 
 @dataclass
 class Level:
@@ -66,7 +73,8 @@ class Level:
             "portals": [
                 {
                     **asdict(portal),
-                    "target_form": portal.target_form.value
+                    "target_form": portal.target_form.value,
+                    "type": portal.type.value
                 } for portal in self.portals
             ]
         }
@@ -87,6 +95,7 @@ class Level:
         for port_data in data.get("portals", []):
             port_data_copy = port_data.copy()
             port_data_copy["target_form"] = FormType(port_data_copy["target_form"])
+            port_data_copy["type"] = PortalType(port_data_copy.get("type", "form"))
             portals.append(Portal(**port_data_copy))
 
         return cls(

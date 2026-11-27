@@ -3,19 +3,26 @@ from core.forms.base import Form
 
 
 class Cube(Form):
-    """Куб: прыгает, пока стоит на опоре и кнопка зажата; в воздухе вращается."""
+    """Куб: прыгает, пока стоит на опоре и кнопка зажата; в воздухе вращается.
+
+    Всё считается относительно гравитации: при перевёрнутой (player.gravity = -1)
+    опора — потолок, а прыжок идёт вниз.
+    """
 
     name = "cube"
     height = physics.BLOCK
 
     def enter(self, player):
-        player.vy = min(player.vy, physics.CUBE_JUMP_SPEED * 0.5)
+        g = player.gravity
+        player.vy = min(player.vy * g, physics.CUBE_JUMP_SPEED * 0.5) * g
 
     def update(self, player, holding, dt):
+        g = player.gravity
         if player.on_ground and holding:
-            player.vy = physics.CUBE_JUMP_SPEED
+            player.vy = physics.CUBE_JUMP_SPEED * g
             player.on_ground = False
-        player.vy = max(player.vy - physics.CUBE_GRAVITY * dt, -physics.CUBE_MAX_FALL)
+        up = player.vy * g - physics.CUBE_GRAVITY * dt
+        player.vy = max(up, -physics.CUBE_MAX_FALL) * g
 
         if player.on_ground:
             target = round(player.angle / 90) * 90
@@ -25,4 +32,4 @@ class Cube(Form):
             else:
                 player.angle += step if target > player.angle else -step
         else:
-            player.angle -= physics.CUBE_SPIN * dt
+            player.angle -= physics.CUBE_SPIN * dt * g

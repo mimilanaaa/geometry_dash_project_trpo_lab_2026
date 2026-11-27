@@ -100,6 +100,9 @@ class GameView(arcade.View):
             if kind == "portal":
                 self.flash = 0.35
                 self.flash_color = theme.get_form_color(value)
+            elif kind == "gravity":
+                self.flash = 0.35
+                self.flash_color = object_view.gravity_color(value)
             elif kind == "death":
                 self.music.stop()
                 p = s.player
@@ -136,10 +139,12 @@ class GameView(arcade.View):
         w = self.window.width
         h = self.window.height
 
-        if p.form_name == "ship":
-            ceil_y = s.ceiling - s.floor + GROUND_SCREEN_Y
-            arcade.draw_lrbt_rectangle_filled(0, w, ceil_y, h, t["panel"])
-            arcade.draw_line(0, ceil_y, w, ceil_y, t["line"], 3)
+        ceil_y = s.ceiling - s.floor + GROUND_SCREEN_Y
+        for start, end in s.ceiling_spans:
+            left = max(0, self.to_screen(start, 0)[0])
+            right = min(w, self.to_screen(end, 0)[0])
+            if left < right:
+                object_view.draw_ceiling(left, right, ceil_y, h)
         object_view.draw_ground(w, GROUND_SCREEN_Y)
 
         if self.flash > 0:
@@ -154,14 +159,26 @@ class GameView(arcade.View):
             sx, sy = self.to_screen(obj.x, obj.y)
             if obj.kind == "portal":
                 object_view.draw_portal(sx, GROUND_SCREEN_Y, PORTAL_SIZE, obj.target)
+            elif obj.kind == "gravity":
+                if obj.target < 0:
+                    object_view.draw_portal(sx, GROUND_SCREEN_Y, PORTAL_SIZE, kind="gravity_flip")
+                else:
+                    # к голубому порталу игрок подходит вверх ногами, поэтому он висит на потолке
+                    object_view.draw_portal(sx, ceil_y - PORTAL_SIZE * 2.4, PORTAL_SIZE,
+                                            kind="gravity_normal")
             elif not (obj.used and obj.kind == "orb"):
-                object_view.draw_object(obj.kind, sx, sy, physics.BLOCK)
+                object_view.draw_object(obj.kind, sx, sy, physics.BLOCK, obj.props)
 
         if p.alive:
             sx, sy = self.to_screen(p.x, p.center_y())
-            height = p.y - s.floor
-            if height < 200:
-                shadow.ground(sx, GROUND_SCREEN_Y + 2, 60 * (1 - height / 300))
+            if p.gravity > 0:
+                height = p.y - s.floor
+                if height < 200:
+                    shadow.ground(sx, GROUND_SCREEN_Y + 2, 60 * (1 - height / 300))
+            else:
+                height = s.ceiling - p.y - p.height
+                if height < 200:
+                    shadow.ground(sx, ceil_y - 2, 60 * (1 - height / 300))
             form_view.draw_form(p.form_name, sx, sy, physics.BLOCK, p.angle)
 
         for piece in self.pieces:

@@ -32,15 +32,17 @@ def find_floor(level):
 
 
 class LevelObject:
-    __slots__ = ("kind", "x", "y", "time", "target", "used")
+    __slots__ = ("kind", "x", "y", "time", "target", "used", "flip", "props")
 
-    def __init__(self, kind, x, y, time, target=None):
+    def __init__(self, kind, x, y, time, target=None, props=None):
         self.kind = kind
         self.x = x
         self.y = y
         self.time = time
         self.target = target
         self.used = False
+        self.props = props or {}
+        self.flip = bool(self.props.get("flip", False))   # шип висит на потолке остриём вниз
 
 
 class GameSession:
@@ -54,23 +56,59 @@ class GameSession:
 
         objects = []
         for obs in level.obstacles:
-            objects.append(LevelObject(value_of(obs.type), obs.x, obs.y, obs.time))
+            objects.append(LevelObject(value_of(obs.type), obs.x, obs.y, obs.time,
+                                       props=getattr(obs, "properties", None)))
         for portal in level.portals:
-            # Портал срабатывает при пересечении по x на любой высоте и рисуется от пола.
-            objects.append(LevelObject("portal", portal.x, self.floor, portal.time,
-                                       value_of(portal.target_form)))
+            # Портал срабатывает при пересечении по x на любой высоте и рисуется от пола
+            # (голубой гравитационный — от потолка: к нему игрок подходит вверх ногами).
+            kind = value_of(getattr(portal, "type", "form"))
+            if kind == "gravity_flip":
+                objects.append(LevelObject("gravity", portal.x, self.floor, portal.time, -1))
+            elif kind == "gravity_normal":
+                objects.append(LevelObject("gravity", portal.x, self.floor, portal.time, 1))
+            else:
+                objects.append(LevelObject("portal", portal.x, self.floor, portal.time,
+                                           value_of(portal.target_form)))
         objects.sort(key=lambda o: o.x)
         self.objects = objects
         self.xs = [o.x for o in objects]
 
         self.player = Player(form, self.floor, self.speed)
         self.player.x = -self.lead
+        self.ceiling_spans = self.find_ceiling_spans()
         self.time = 0.0
         self.state = "playing"      # playing / dead / complete
         self.holding = False
         self.orb_buffer = 0.0
         self.accum = 0.0
         self.events = []
+
+    def find_ceiling_spans(self):
+        """Участки по x, где есть потолок (корабль или перевёрнутая гравитация) — для отрисовки."""
+        spans = []
+        form = self.player.form.name
+        gravity = 1
+        start = float("-inf") if form == "ship" else None
+        for obj in self.objects:
+            if obj.kind == "portal":
+                form = obj.target
+            elif obj.kind == "gravity":
+                gravity = obj.target
+            else:
+                continue
+            on = form == "ship" or gravity < 0
+            if on and start is None:
+                start = obj.x
+            elif not on and start is not None:
+                spans.append((start, obj.x))
+                start = None
+        if start is not None:
+            spans.append((start, float("inf")))
+        return spans
+
+    def has_ceiling(self):
+        """Потолок есть у корабля и при перевёрнутой гравитации."""
+        return self.player.form.name == "ship" or self.player.gravity < 0
 
     def percent(self):
         return max(0.0, min(100.0, self.time / self.duration * 100))
@@ -99,15 +137,19 @@ class GameSession:
         p.y += p.vy * dt
         p.x = self.time * self.speed - self.lead
 
+        # При обычной гравитации опора — пол, при перевёрнутой — потолок.
         if p.y <= self.floor:
             p.y = self.floor
             if p.vy < 0:
                 p.vy = 0
-            p.on_ground = True
-        if p.form.name == "ship" and p.y + p.height >= self.ceiling:
+            if p.gravity > 0:
+                p.on_ground = True
+        if self.has_ceiling() and p.y + p.height >= self.ceiling:
             p.y = self.ceiling - p.height
             if p.vy > 0:
                 p.vy = 0
+            if p.gravity < 0:
+                p.on_ground = True
 
         reach = physics.BLOCK * 1.5
         lo = bisect.bisect_left(self.xs, p.x - reach)
@@ -135,10 +177,15 @@ class GameSession:
                 obj.used = True
                 p.change_form(obj.target)
                 self.events.append(("portal", obj.target))
+        elif kind == "gravity":
+            if not obj.used and p.x >= obj.x:
+                obj.used = True
+                p.change_gravity(obj.target)
+                self.events.append(("gravity", obj.target))
         elif kind == "pad":
             if not obj.used and p.form.name == "cube" and collision.overlaps(p.hitbox(), collision.pad_box(obj)):
                 obj.used = True
-                p.vy = physics.PAD_SPEED
+                p.vy = physics.PAD_SPEED * p.gravity
                 p.on_ground = False
                 self.events.append(("pad", None))
         elif kind == "orb":
@@ -146,7 +193,7 @@ class GameSession:
                     and collision.touches_orb(p, obj)):
                 obj.used = True
                 self.orb_buffer = 0
-                p.vy = physics.ORB_SPEED
+                p.vy = physics.ORB_SPEED * p.gravity
                 p.on_ground = False
                 self.events.append(("orb", None))
 
