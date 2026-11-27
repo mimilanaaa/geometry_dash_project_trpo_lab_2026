@@ -110,7 +110,8 @@ class LevelViewerView(arcade.View):
             sx = self.to_screen(portal.x)
             if -size <= sx <= self.window.width + size:
                 object_view.draw_portal(sx, self.to_screen_y(portal.y), size,
-                                        value_of(portal.target_form), portal.speed_multiplier)
+                                        value_of(portal.target_form), portal.speed_multiplier,
+                                        value_of(getattr(portal, "type", "form")))
 
     def draw_info(self):
         t = theme.get_theme()
